@@ -64,7 +64,35 @@ io.on('connection',(socket)=>{
         console.log(`User ${userEmail} joined room ${roomId}`);
     });
 
-    
+    //offer
+    socket.on('offer',(offer:RTCSessionDescriptionInit,roomId:string)=>{
+        socket.to(roomId).emit("offer",offer,socket.id);
+    });
+    // answer
+    socket.on("answer",(answer:RTCSessionDescriptionInit,roomId:string)=>{
+        socket.to(roomId).emit("answer",answer,roomId);
+    });
+    // Ice candidates
+    socket.on("ice-candidate",(candidate: RTCIceCandidateInit, roomId: string)=>{
+        socket.to(roomId).emit("ice-candidate",candidate,socket.id);
+    });
+
+    // Handle disconnection
+    socket.on('disconnect',()=>{
+        console.log("User Disconnected:",socket.id);
+
+        // remove the user from the room and notify the other users of leaving the room
+        rooms.forEach((users,roomid)=>{
+            for(const user of users){
+                if(user.id===socket.id){
+                    users.delete(user);
+                    socket.to(roomid).emit('user-left',socket.id);
+                    break;
+                }
+
+            }
+        })
+    })
 });
 
 
